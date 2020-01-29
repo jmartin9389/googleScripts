@@ -1,0 +1,15 @@
+function createHyperlinks() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var range = sheet.getActiveRange();
+  var input = range.getValues();
+  var output = [];
+  Logger.log(input);
+  for (a=0; a<input.length; a++){
+    output[a] = [];
+  };
+  for (a=0; a<input.length; a++){
+    output[a][0] = '=HYPERLINK("","'+input[a][0]+'")';
+  };
+  Logger.log(output);
+  sheet.getActiveRange().setValues(output);
+}
