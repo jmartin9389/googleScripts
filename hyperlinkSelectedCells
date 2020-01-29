@@ -3,13 +3,15 @@ function createHyperlinks() {
   var range = sheet.getActiveRange();
   var input = range.getValues();
   var output = [];
+  Logger.log(input.length);
+  Logger.log(input[0].length);
   Logger.log(input);
+  
   for (a=0; a<input.length; a++){
-    output[a] = [];
+    output[a] = []
+    for (b=0; b<input[a].length; b++) {
+      output[a][b]= '=HYPERLINK("","'+input[a][b]+'")';
+    };
   };
-  for (a=0; a<input.length; a++){
-    output[a][0] = '=HYPERLINK("","'+input[a][0]+'")';
-  };
-  Logger.log(output);
   sheet.getActiveRange().setValues(output);
-}
+};
