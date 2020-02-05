@@ -1,0 +1,20 @@
+function onEdit() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var sheetName = sheet.getSheetName();
+  if (sheetName == "Sheet") {
+    lastUpdate(sheet,6,7);
+  };
+}
+//This function will take a sheet object in "sheet" variable. "colEdit" will take a column number of which should be the last column 
+//that will checked for edits; that column number and lower will be checked for edits.  "colDate" is the column that the current date will 
+//be added when edits are made to the pertinent columns.  All actions will be performed on the current active row.
+function lastUpdate(sheet,colEdit,colDate) {
+  var cell = sheet.getActiveCell();
+  var row = cell.getRow();
+  var col = cell.getColumn();
+  if(col <= colEdit && row > 1) { //checks that we're on the correct sheet
+      var time = new Date();
+      time = Utilities.formatDate(time, "America/New_York", "MMM dd");
+      sheet.getRange(row,colDate).setValue(time);
+    };
+}
