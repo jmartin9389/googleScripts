@@ -2,7 +2,7 @@ function createHyperlinks() {
   
 //  This script will prepare all selected cells with hyperlinks displaying the current text of the cell and blank link.
 //  Select cells that you want to create hyperlinks for that already have the desired display text
-//  Run script, then add desired link into the empty set of parenthesis
+//  Run script, then add desired link into the empty set of quotes
   
   var sheet = SpreadsheetApp.getActiveSheet();
   var range = sheet.getActiveRange();
