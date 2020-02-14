@@ -1,0 +1,29 @@
+function uncheckBoxes() {
+ 
+  var range = SpreadsheetApp.getActiveSheet().getActiveRange();
+  var values = range.getValues();
+  for (i=0; i<values.length; i++) {
+    for (j=0; j<values[i].length; j++) {
+      if (values[i][j]==true) {
+        values[i][j]='false';
+      }
+    }
+  }
+  range.setValues(values);
+  
+}
+
+function checkBoxes() {
+ 
+  var range = SpreadsheetApp.getActiveSheet().getActiveRange();
+  var values = range.getValues();
+  for (i=0; i<values.length; i++) {
+    for (j=0; j<values[i].length; j++) {
+      if (values[i][j]==false) {
+        values[i][j]='true';
+      }
+    }
+  }
+  range.setValues(values);
+  
+}
