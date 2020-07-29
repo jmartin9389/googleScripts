@@ -1,0 +1,552 @@
+function getHeaders() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName('5 & 7');
+  var headers = sheet.getRange(2,1,1,sheet.getLastColumn()).getValues();
+};
+
+function fixInventory() {
+  
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName('Inventory');
+  var lastRow = sheet.getLastRow();
+  
+  if(sheet.getRange(3,7).getValue() == "Product Code") {
+  sheet.insertColumnBefore(7);
+  sheet.getRange(4,7,lastRow-3).setFormulaR1C1("=LEFT(R[0]C[1],8)");  };
+  setup57();
+  setup68();
+
+};
+
+function addBuildCell57() {
+  addBuildCell('5 & 7');
+};
+
+function addBuildCell68() {
+  addBuildCell('6 & 8');
+};
+
+function addSubCell57() {
+  addSubCell('5 & 7');
+};
+
+function addSubCell68() {
+  addSubCell('6 & 8');
+};
+
+function addBuildCell (sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  
+  if (sheet.getRange(2,27).getValue() != "Build Cell"){
+  sheet.insertColumnAfter(26);
+    sheet.getRange(2,27).setValue("Build Cell");
+  };
+  
+  var lastRow = sheet.getLastRow();
+  var buildCellArr = [];
+  var buildCell = 0;
+  
+  var data = sheet.getRange(3,5,lastRow-2,3).getValues();
+  
+  for (a=0;a<data.length;a++) {
+    buildCellArr[a] = [];
+  };
+  
+  for (a=0;a<data.length;a++) {
+    if (data[a][2] == 1) {
+      buildCell = data[a][0];
+    };
+    buildCellArr[a][0] = buildCell;
+  };
+  sheet.getRange(3,27,lastRow-2).setValues(buildCellArr);
+
+};
+
+function addSubCell (sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  
+  if (sheet.getRange(2,29).getValue() != "Sub Cell"){
+  sheet.insertColumnAfter(28);
+    sheet.getRange(2,29).setValue("Sub Cell");
+  };
+  
+  var lastRow = sheet.getLastRow();
+  var subCellArr = [];
+  var subCell = "";
+  
+  var data = sheet.getRange(3,5,lastRow-2,3).getValues();
+  
+  for (a=0;a<data.length;a++) {
+    subCellArr[a] = [];
+  };
+  
+  for (a=0;a<data.length;a++) {
+    if (data[a][2] == 2) {
+      subCell = data[a][0];
+    };
+    subCellArr[a][0] = subCell;
+  };
+  sheet.getRange(3,29,lastRow-2).setValues(subCellArr);
+
+};
+
+function setup57() {
+  var t0 = Date.now();
+  var vehicles = [4,5,7];
+  setupEU(vehicles,t0);
+  
+};
+
+function setup68() {
+  var t0 = Date.now();
+  var vehicles = [6,8]
+  setupA1(vehicles,t0);
+};
+
+function findSheet(name,sheets) {
+  for (var a=0;a<sheets.length;a++) {
+    if (sheets[a].getName() == name) {return true;};
+  };
+};
+
+function buildName(vehicles) {
+  var name = "";
+  if (vehicles.length == 1) {name.concat(vehicles[0])};
+  
+  if (vehicles.length == 2) {name = vehicles.join(" & ");};
+  
+  if (vehicles.length > 2) {name = vehicles.join(", ");};
+  
+  return name;
+};
+
+function setupEU(vehicles,t0) {
+  
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var type = 2;
+  var name = "";
+  
+  name = buildName(vehicles);
+
+  if (!findSheet(name,sheets)) { 
+      ss.getSheetByName("C-002").copyTo(ss).setName(name).activate();
+  };
+
+  ss.getSheetByName(name).activate();
+  var t1 = Date.now();
+  
+  Logger.log("Elapsed time, T1: "+(t1 - t0)/1000+"s");
+  
+  setupBOM(vehicles,type,t0);
+  
+  var t7 = Date.now();
+  
+  Logger.log("Elapsed time, T7: "+(t7-t0)/1000+"s");
+  
+  toDoSheet(vehicles);
+  
+  var sheet = ss.getSheetByName(name);
+  
+  sheet.getRange(2,1,sheet.getLastRow()-1).setBackground("light yellow 2");
+  sheet.getRange(2,1,sheet.getLastRow()-1).setBackground("light green 2");
+  
+  
+  var t8 = Date.now();
+  
+  Logger.log("Elapsed time, T8: "+(t8-t0)/1000+"s");
+};
+
+function setupA1(vehicles,t0) {
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var type = 1;
+  var name = "";
+  
+  if (vehicles.length == 1) {name.concat(vehicles[0])};
+  
+  if (vehicles.length == 2) {name = vehicles.join(" & ");};
+  
+  if (vehicles.length > 2) {name = vehicles.join(", ");};
+  
+  if (!findSheet(name,sheets)) { 
+    ss.getSheetByName("C-002").copyTo(ss).setName(name).activate();
+  };
+  
+  ss.getSheetByName(name).activate();
+
+  setupBOM(vehicles,type,t0);
+  
+  var t7 = Date.now();
+  
+  Logger.log("Elapsed time, T7: "+(t7-t0)/1000+"s");
+  
+  toDoSheet(vehicles);
+  
+  var sheet = ss.getSheetByName(name);
+  
+  sheet.getRange(2,1,sheet.getLastRow()-1).setBackground("light blue 2");
+  sheet.getRange(2,1,sheet.getLastRow()-1).setBackground("light orange 2");
+  
+  var t8 = Date.now();
+  
+  Logger.log("Elapsed time, T8: "+(t8-t0)/1000+"s");
+};
+
+function setupBOM(vehicles,type,t0) {
+   
+
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+
+ 
+//  Insert Vehicle Check Columns
+  var t2 = Date.now();
+  
+  Logger.log("Elapsed time, T2: "+(t2 - t0)/1000+"s");
+  
+  var headers = sheet.getRange(2,1,1,lastCol).getValues();
+  
+  for (a=0;a<vehicles.length;a++) {
+    if (headers[0][a] != vehicles[a]) {
+      sheet.insertColumnBefore(a+1);
+      sheet.getRange(2,a+1).setValue(vehicles[a]);
+    };
+  };
+  sheet.getRange(3,1,lastRow-2,vehicles.length).insertCheckboxes();
+  
+  //  Get Column Offsets in place
+  
+  var offset = vehicles.length;
+  
+  var t3 = Date.now();
+  
+  Logger.log("Elapsed time, T3: "+ (t3 - t0)/1000+"s");
+  
+  //  Install New Columns and Headers
+  
+  function fixColumn(column) {
+    var headers = sheet.getRange(2,1,1,lastCol).getValues();
+    if (headers[0].indexOf(column.title) == -1) {
+      sheet.insertColumnBefore(column.col);
+      sheet.getRange(2,column.col).setValue(column.title);
+    } else if (headers[0].indexOf(column.title) != column.col-1) {
+      Logger.log(column.title +" Column: "+ headers[0].indexOf(column.title));
+      var data = sheet.getRange(1,headers[0].indexOf(column.title)+1,lastRow).getValues();
+      sheet.deleteColumn(headers[0].indexOf(column.title)+1);
+      sheet.insertColumnBefore(column.col);
+      sheet.getRange(1,column.col,lastRow).setValues(data);
+    };
+  };
+  
+  var firstVehicle = new Column(vehicles[0],1);
+  var lastVehicle = new Column(vehicles[0][vehicles.length+1],vehicles.length);
+  var npv = new Column("NPV", offset + 15 + type);
+  var partNo = new Column("LM Part Number",offset + 2); 
+  var partName = new Column("Part Name", offset + 3);
+  var bomLine = new Column("BOM Line ID",offset + 1);
+  var buildCell = new Column("Build Cell",offset + 4);
+  var subCell = new Column("Sub Cell",offset + 5);  
+  var consumableRef = new Column("Consumable Reference",offset + 6);
+  var crQty = new Column("CR Quantity",offset + 7);
+  var crUOM = new Column("CR UoM", offset + 8);
+  var assyCheck = new Column("Assembly Check",offset + 9);
+  var onshelfInvQty = new Column("Onshelf Inventory QTY", offset + 10);
+  var numNeeded = new Column("Number Needed",offset + 11);
+  var goodStock = new Column("Good Stock?", offset + 12);
+  var bomLevel = new Column("BOM Level", offset + 14);
+  var onshelfInv = new Column("Onshelf Inventory", offset + 18);
+  var inOnshelf = new Column("In Onshelf?", offset + 19);
+  
+  fixColumn(buildCell);
+  fixColumn(subCell);
+  fixColumn(consumableRef);
+  fixColumn(crQty);
+  fixColumn(crUOM);
+  fixColumn(assyCheck);
+  fixColumn(onshelfInvQty);
+  fixColumn(numNeeded);
+  fixColumn(goodStock);
+  fixColumn(bomLevel);
+  fixColumn(onshelfInv);
+  fixColumn(inOnshelf);
+  
+  function bomLevelAttribute(targetCol,dataCol,bomLevelNo,infoCol) {
+    var data = sheet.getRange(3,1,lastRow-2,dataCol).getValues();
+    var buildCellArr = [];
+    var buildCellName = "";
+    for (a=0;a<data.length;a++) {
+      buildCellArr[a] = [];
+    };
+    for (a=0;a<data.length;a++) {
+      if (data[a][dataCol-1] == bomLevelNo) {
+        buildCellName = data[a][infoCol-1];
+        Logger.log(buildCellName);
+      };
+      buildCellArr[a][0] = buildCellName;
+    };
+    sheet.getRange(3,targetCol,lastRow-2).setValues(buildCellArr);
+  };
+  
+  bomLevelAttribute(buildCell.col,bomLevel.col,1,partName.col);
+  bomLevelAttribute(subCell.col,bomLevel.col,2,partName.col);
+  
+  var t4 = Date.now();
+  
+  headers = sheet.getRange(2,1,1,lastCol).getValues();
+  
+  Logger.log("Elapsed time, T4: "+(t4-t0)/1000+"s");
+  
+//  Setup Formula Column Variables
+
+  var onshelfInvFormula = '=if(isblank('+partNo.colLet+'3),,if(isblank('+consumableRef.colLet+'3),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror("ALT - " & vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),"Part Not Found, No CR")),iferror("CR - " & vlookup(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$K,4,0),iferror("ALT CR - " & vlookup(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$K,5,0),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror("ALT - " & vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),"Part Not Found, CR Not Found"))))))';
+  var onshelfInvQtyFormula = '=if(isblank('+partNo.colLet+'3),,if(isblank('+consumableRef.colLet+'3),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror(vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),0)),iferror(vlookup(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$K,4,0),iferror(vlookup(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$K,5,0),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror(vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),0))))))';
+  var inOnshelfFormula = '=if(isblank('+partNo.colLet+'3),false,if(iferror(match('+partNo.colLet+'3,Inventory!$H$4:$H,0),false),true,if(iferror(match('+bomLine.colLet+'3,Inventory!$G$4:$G,0),false),true,if(isblank('+consumableRef.colLet+'3),false,if(iferror(match(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$H,0),false),true,if(iferror(match(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$G,0),false),true,false))))))';
+  var numNeededFormula = '=if(isblank('+assyCheck.colLet+'3),countif('+firstVehicle.colLet+'3:'+lastVehicle.colLet+'3,"=false")*'+npv.colLet+'3,)';
+  var goodStockFormula = '=if(isblank('+numNeeded.colLet+'3),"N/A",if('+numNeeded.colLet+'3<='+onshelfInvQty.colLet+'3,"true","!!!ALERT!!!"))';
+  
+// Check column formulas and insert them if they don't match current formula recipe
+
+  function setFormula(col,formula) {
+    if (sheet.getRange(3,col).getFormula() != formula) {
+      sheet.getRange(3,col,lastRow-2).setFormula(formula);
+    };
+  };
+    
+  setFormula(onshelfInvQty.col,onshelfInvQtyFormula);
+  setFormula(onshelfInv.col,onshelfInvFormula);
+  setFormula(inOnshelf.col,inOnshelfFormula);
+  setFormula(numNeeded.col,numNeededFormula);
+  setFormula(goodStock.col,goodStockFormula);
+    
+  var t5 = Date.now();
+  
+  Logger.log("Elapsed time, T5: "+(t5-t0)/1000+"s");
+//  Get BOM Level array column address
+  
+  for (a=0;a<headers[0].length;a++) {
+    if (headers[0][a] == "BOM Level") {
+      bomLevel.col = a + 1;
+      break;
+    };
+  };
+  
+// Create Data Array 
+  
+  var data = sheet.getRange(3,1,lastRow-2,30).getValues();
+  var assemblyRow = 0;
+  sheet.getRange(3,assyCheck.col,lastRow-2).clearContent();
+//  Loop through Data, searching for rows that are not in Onshelf
+    
+  for (t=1;t<data.length;t++) {
+    var log = 0;
+
+    if(data[t][inOnshelf.col-1] == false) {
+      
+      if (searchPOA(t)) {
+        
+       sheet.getRange(t+3,assyCheck.col).setValue("POA");
+        
+      } else if (searchAOP(t)) {
+          
+          sheet.getRange(t+3,assyCheck.col).setValue("AOP");
+          
+        }; 
+       };
+        
+     };
+      
+  var t6 = Date.now();
+  
+  Logger.log("Elapsed time, T6: "+(t6-t0)/1000+"s");
+
+
+  var lastCol = sheet.getLastColumn();
+  sheet.clearConditionalFormatRules();
+  var rules = sheet.getConditionalFormatRules();
+  var rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=and($A3=false,$B4=false)')
+        .setBackground("Yellow")
+        .setRanges([sheet.getRange(3,1,lastRow-2,lastCol)])
+        .build();
+  rules.push(rule);
+  
+  rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=$B3=false')
+        .setBackground("Purple")
+        .setRanges([sheet.getRange(3,1,lastRow-2,lastCol)])
+        .build();
+  rules.push(rule);
+  
+  rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=AND($M3=FALSE,ISBLANK($N3))')
+        .setBackground("Cyan")
+        .setRanges([sheet.getRange(3,1,lastRow-2,lastCol)])
+        .build();
+  
+  rules.push(rule);
+  
+  
+  rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=$'+goodStock.colLet+'3="!!!ALERT!!!"')
+        .setBackground("Red")
+        .setFontColor("White")
+        .setRanges([sheet.getRange(3,1,lastRow-2,lastCol)])
+        .build();
+  rules.push(rule);
+  
+
+  sheet.setConditionalFormatRules(rules);
+
+
+  
+  
+  
+function searchAOP(startRow){
+ var a = startRow;
+ var b = a + 1;
+ var count = 0;
+ var countT = 0;
+    
+ while (b < data.length && data[a][bomLevel.col-1] > 1 && data[b][bomLevel.col-1] > data[a][bomLevel.col-1]){
+   count++;
+   if (data[b][inOnshelf.col-1] == true) {
+     countT++;
+     } else {
+       if (searchAOP(b)) {
+         countT++;
+       } else {
+         if (searchPOA(b)) {countT++};
+       };
+     };
+   b++;
+   };
+   if (count == countT && count > 0) {return true;};
+  };
+    
+function searchPOA(startRow){
+  var b = startRow;
+  while (b>0 && data[startRow][bomLevel.col-1] > 0 && data[b][bomLevel.col-1] >= data[startRow][bomLevel.col-1]) {b--;};
+  var assemblyRow = b;
+  if (data[assemblyRow][inOnshelf.col-1] == true) {return true;} else if (data[assemblyRow][bomLevel.col-1] > 0) {if(searchPOA(assemblyRow)){return true;};};
+  return false;
+};
+  
+};
+  
+function toDoSheet (vehicles) {
+  
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var vehicleColLetter = "";
+  var sourceName = buildName(vehicles);
+  var dataSheet = ss.getSheetByName(sourceName);
+  var dataSheetLastCol = dataSheet.getLastColumn();
+  if (dataSheetLastCol <= 26) {var dataSheetLastColLetter = String.fromCharCode(dataSheetLastCol + 64);} else {var dataSheetLastColLetter = "A"+String.fromCharCode(dataSheetLastCol - 26 + 64);};
+  var firstDataCol = String.fromCharCode(vehicles.length + 1 + 64);
+
+  
+  var selectColsArr = [];
+  
+  for (var a=0;a<dataSheetLastCol-vehicles.length;a++) {
+    if (a+vehicles.length+1 <= 26){selectColsArr.push(String.fromCharCode(a+vehicles.length+64+1));} else {selectColsArr.push("A"+String.fromCharCode(a+vehicles.length+64+1-26));};
+  };
+  
+  var selectCols = selectColsArr.join(", "); 
+  Logger.log("Vehicles.length: "+vehicles.length);
+  for (a=0;a<vehicles.length;a++){
+    Logger.log("Loop "+a);
+    var name = vehicles[a] +" To-Do";
+    Logger.log(name);
+    vehicleColLetter = String.fromCharCode(a + 65);
+    if (!findSheet(name,sheets)) {
+      ss.insertSheet(name);
+      };
+    var toDoSheet = ss.getSheetByName(name);
+    var toDoFormula = "=query('"+sourceName+"'!A:"+dataSheetLastColLetter+',"select '+selectCols+' where '+vehicleColLetter+' = false",2)';
+  toDoSheet.getRange(2,1).setFormula(toDoFormula);
+  
+    
+   var sheet = ss.getSheetByName(name);
+   var range = sheet.getRange(1,1,sheet.getLastRow());
+   ss.getSheetByName(name).unhideRow(range);
+   clearDepth(name);
+   setDepth(name);
+  
+  };
+};
+ 
+function clearDepth(sheetName) {
+ 
+  
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+ var lastRow = sheet.getLastRow();
+ var range = sheet.getRange(1,1,3000);
+ range.shiftRowGroupDepth(-8);
+  
+ var t2 = Date.now();
+
+  
+};
+
+function setDepth(sheetName) {
+
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+ var lastRow = sheet.getLastRow();
+ var lastCol = sheet.getLastColumn(); 
+ var headers = sheet.getRange(2,1,1,lastCol).getValues(); 
+ var a = 0;
+  while (a < headers[0].length && headers[0][a] != " BOM Level") {a++;};
+ var dRow = a + 1;
+ var depthList = sheet.getRange(3,dRow,lastRow-2).getValues();
+ var startRow = 0;
+ var endRow = 0;
+ var depthRange = "";
+ var testRow = "";
+ var depthRangeArr = [];
+  
+ for (i=0;i<=8;i++) {
+     for (a=0;a<depthList.length;a++){
+     if (depthList[a][0] > i) {
+       startRow = a+3;
+       testRow = a;
+       while (depthList[testRow+1] > i) {
+         testRow++;
+       };
+       endRow = testRow + 3;
+       depthRangeArr.push("A"+startRow+":A"+endRow);
+       a = testRow;
+     };
+   };   
+   for (d=0;d<depthRangeArr.length;d++){
+     sheet.getRange(depthRangeArr[d]).shiftRowGroupDepth(1);
+   };
+   depthRangeArr = [];
+  };
+
+};
+
+function Column(title,col) {
+  this.title = title;
+  this.col = col;
+  if(col < 27) {this.colLet = String.fromCharCode(64 + col)} else if (col > 26) {this.colLet = "A"+ String.fromCharCode(64 - 26 + col)};
+};
+
+function concatString() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var range = sheet.getActiveRange();
+  var targetCol = range.getColumn() + range.getNumColumns();
+  var targetRow = range.getRow();
+  var targetRows = range.getNumRows();
+  var source = range.getValues();
+  var output = [];
+  var values = [];
+  
+  for (a=0;a<source.length;a++){
+    output[a] = [];
+    output[a][0] = '('+source[a][2]+') '+source[a][0]+' - '+source[a][1];
+  };
+  
+  
+  sheet.getRange(targetRow,targetCol,targetRows).setValues(output);
+};
