@@ -1,0 +1,1297 @@
+function setupStatus(vehicles,type) {
+  this.start = Date.now();
+  this.name = buildName(vehicles);
+  this.ss = SpreadsheetApp.getActive();
+  this.sheet = this.ss.getSheetByName(this.name);
+  
+  this.end = Date.now();
+};
+
+function getHeaders(sheet) {
+  var headers = sheet.getRange(2,1,1,sheet.getLastColumn()).getValues();
+  return headers;
+};
+
+function fixInventory() {  
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName('Inventory');
+  var lastRow = sheet.getLastRow();
+  
+  if(sheet.getRange(3,7).getValue() == "Product Code") {
+  sheet.insertColumnBefore(7);
+  sheet.getRange(4,7,lastRow-3).setFormulaR1C1("=LEFT(R[0]C[1],8)");  };
+  setup57();
+  setup68();
+  setup914();
+};
+
+function setup57() {
+  var t0 = Date.now();
+  var vehicles = [4,5,7];
+  setupEU(vehicles,t0);
+  
+};
+
+function setup68() {
+  var t0 = Date.now();
+  var vehicles = [6,8]
+  setupA1(vehicles,t0);
+};
+
+function setup914() {
+  var t0 = Date.now();
+  var vehicles = [9,10,11,12,14];
+  setupA1V2(vehicles,t0);
+};
+
+function findSheet(name,sheets) {
+  for (var a=0;a<sheets.length;a++) {
+    if (sheets[a].getName() == name) {return true;};
+  };
+};
+
+function buildName(vehicles) {
+  var name = "";
+  if (vehicles.length == 1) {name.concat(vehicles[0])};
+  
+  if (vehicles.length == 2) {name = vehicles.join(" & ");};
+  
+  if (vehicles.length > 2) {name = vehicles.join(", ");};
+  
+  return name;
+};
+
+function setupEU(vehicles,t0) {  
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var type = 2;
+  var name = "";  
+  name = buildName(vehicles);
+  if (!findSheet(name,sheets)) { 
+      ss.getSheetByName("C-002").copyTo(ss).setName(name).activate();
+  };
+  ss.getSheetByName(name).activate();
+  var t1 = Date.now();  
+  Logger.log("Elapsed time, T1: "+(t1 - t0)/1000+"s");  
+  setupBOM(vehicles,type,t0);  
+  var t7 = Date.now();  
+  Logger.log("Elapsed time, T7: "+(t7-t0)/1000+"s");    
+  var sheet = ss.getSheetByName(name); 
+  var t8 = Date.now();  
+  Logger.log("Elapsed time, T8: "+(t8-t0)/1000+"s");
+};
+
+function setupA1(vehicles,t0) {
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var type = 1;
+  var name = "";  
+  if (vehicles.length == 1) {name.concat(vehicles[0])};  
+  if (vehicles.length == 2) {name = vehicles.join(" & ");};  
+  if (vehicles.length > 2) {name = vehicles.join(", ");};  
+  if (!findSheet(name,sheets)) { 
+    ss.getSheetByName("C-001").copyTo(ss).setName(name).activate();
+  };  
+  ss.getSheetByName(name).activate();
+  setupBOM(vehicles,type,t0);  
+  var t7 = Date.now();  
+  Logger.log("Elapsed time, T7: "+(t7-t0)/1000+"s");  
+  var t8 = Date.now();  
+  Logger.log("Elapsed time, T8: "+(t8-t0)/1000+"s");
+};
+
+function setupA1V2(vehicles,t0) {
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets();
+  var type = 1;
+  var name = "";  
+  if (vehicles.length == 1) {name.concat(vehicles[0])};  
+  if (vehicles.length == 2) {name = vehicles.join(" & ");};  
+  if (vehicles.length > 2) {name = vehicles.join(", ");};  
+  if (!findSheet(name,sheets)) { 
+    ss.getSheetByName("C-001 V2").copyTo(ss).setName(name).activate();
+  };  
+  ss.getSheetByName(name).activate();
+  setupBOM(vehicles,type,t0);  
+  var t7 = Date.now();  
+  Logger.log("Elapsed time, T7: "+(t7-t0)/1000+"s");  
+  var t8 = Date.now();  
+  Logger.log("Elapsed time, T8: "+(t8-t0)/1000+"s");
+};
+
+function setupBOM(vehicles,type,t0) {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const name = sheet.getSheetName();
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const color = new Color;
+  const vehicleColors = [color.light_blue_1,color.light_magenta_1,color.light_orange_1,color.light_purple_1,color.light_yellow_1,color.dark_cornflower_blue_1,color.light_green_1];
+  const highlightColors = [color.yellow,color.orange,color.cornflower_blue,color.purple,color.blue,color.green];
+  const textColors = [color.black,color.white,color.white,color.white,color.white,color.white]; 
+  const t2 = Date.now();  
+  Logger.log("Elapsed time, T2: "+(t2 - t0)/1000+"s");  
+  const headers = sheet.getRange(2,1,1,lastCol).getValues();
+  setCheckBoxes(vehicles,headers,sheet,vehicleColors,lastRow);
+  var offset = vehicles.length;  
+  sheet.getRange(1,1).setValue(offset).setFontColor('#d8d8d8');  
+  var t3 = Date.now();  
+  Logger.log("Elapsed time, T3: "+ (t3 - t0)/1000+"s");  
+
+  function fixColumn(column) {
+    var headers = sheet.getRange(2,1,1,lastCol).getValues();
+    if (headers[0].indexOf(column.title) == -1) {
+      sheet.insertColumnBefore(column.col);
+      sheet.getRange(2,column.col).setValue(column.title);
+    } else if (headers[0].indexOf(column.title) != column.col-1) {
+      var data = sheet.getRange(1,headers[0].indexOf(column.title)+1,lastRow).getValues();
+      sheet.deleteColumn(headers[0].indexOf(column.title)+1);
+      sheet.insertColumnBefore(column.col);
+      sheet.getRange(1,column.col,lastRow).setValues(data);
+    };
+  };  
+  
+  const columns = {
+    
+  };
+  
+  const firstVehicle = new Column(vehicles[0],1);
+  const lastVehicle = new Column(vehicles[0][vehicles.length+1],vehicles.length);
+  const npv = new Column("NPV", offset + 15 + type);
+  const partNo = new Column("LM Part Number",offset + 2); 
+  const partName = new Column("Part Name", offset + 3);
+  const bomLine = new Column("BOM Line ID",offset + 1);
+  const buildCell = new Column("Build Cell",offset + 4);
+  const subCell = new Column("Sub Cell",offset + 5);  
+  const consumableRef = new Column("Consumable Reference",offset + 6);
+  const crQty = new Column("CR Quantity",offset + 7);
+  const crUOM = new Column("CR UoM", offset + 8);
+  const assyCheck = new Column("Assembly Check",offset + 9);
+  const onshelfInvQty = new Column("Onshelf Inventory QTY", offset + 10);
+  const numNeeded = new Column("Number Needed",offset + 11);
+  const goodStock = new Column("Good Stock?", offset + 12);
+  const bomLevel = new Column("BOM Level", offset + 14);
+  const onshelfInv = new Column("Onshelf Inventory", offset + 18);
+  const inOnshelf = new Column("In Onshelf?", offset + 19);  
+  fixColumn(buildCell);
+  fixColumn(subCell);
+  fixColumn(consumableRef);
+  fixColumn(crQty);
+  fixColumn(crUOM);
+  fixColumn(assyCheck);
+  fixColumn(onshelfInvQty);
+  fixColumn(numNeeded);
+  fixColumn(goodStock);
+  fixColumn(bomLevel);
+  fixColumn(onshelfInv);
+  fixColumn(inOnshelf);  
+  function bomLevelAttribute(targetCol,dataCol,bomLevelNo,infoCol) {
+    var data = sheet.getRange(3,1,lastRow-2,dataCol).getValues();
+    var buildCellArr = [];
+    var buildCellName = "";
+    for (a=0;a<data.length;a++) {
+      buildCellArr[a] = [];
+    };
+    for (a=0;a<data.length;a++) {
+      if (data[a][dataCol-1] == bomLevelNo) {
+        buildCellName = data[a][infoCol-1];
+      };
+      buildCellArr[a][0] = buildCellName;
+    };
+    sheet.getRange(3,targetCol,lastRow-2).setValues(buildCellArr);
+  };
+  bomLevelAttribute(buildCell.col,bomLevel.col,1,partName.col);
+  bomLevelAttribute(subCell.col,bomLevel.col,2,partName.col);  
+  var t4 = Date.now();  
+  headers = sheet.getRange(2,1,1,lastCol).getValues();  
+  Logger.log("Elapsed time, T4: "+(t4-t0)/1000+"s");  
+  var onshelfInvFormula = '=if(isblank('+partNo.colLet+'3),,if(isblank('+consumableRef.colLet+'3),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror("ALT - " & vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),"Part Not Found, No CR")),iferror("CR - " & vlookup(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$K,4,0),iferror("ALT CR - " & vlookup(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$K,5,0),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror("ALT - " & vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),"Part Not Found, CR Not Found"))))))';
+  var onshelfInvQtyFormula = '=if(isblank('+partNo.colLet+'3),,if(isblank('+consumableRef.colLet+'3),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror(vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),0)),iferror(vlookup(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$K,4,0),iferror(vlookup(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$K,5,0),iferror(vlookup('+partNo.colLet+'3,Inventory!$H$4:$K,4,0),iferror(vlookup('+bomLine.colLet+'3,Inventory!$G$4:$K,5,0),0))))))';
+  var inOnshelfFormula = '=if(isblank('+partNo.colLet+'3),false,if(iferror(match('+partNo.colLet+'3,Inventory!$H$4:$H,0),false),true,if(iferror(match('+bomLine.colLet+'3,Inventory!$G$4:$G,0),false),true,if(isblank('+consumableRef.colLet+'3),false,if(iferror(match(left('+consumableRef.colLet+'3,10),Inventory!$H$4:$H,0),false),true,if(iferror(match(left('+consumableRef.colLet+'3,8),Inventory!$G$4:$G,0),false),true,false))))))';
+  var numNeededFormula = '=if(isblank('+assyCheck.colLet+'3),countif('+firstVehicle.colLet+'3:'+lastVehicle.colLet+'3,"=false")*'+npv.colLet+'3,)';
+  var goodStockFormula = '=if(isblank('+numNeeded.colLet+'3),"N/A",if('+numNeeded.colLet+'3<='+onshelfInvQty.colLet+'3,"true","!!!ALERT!!!"))';
+  function setFormula(col,formula) {
+    if (sheet.getRange(3,col).getFormula() != formula) {
+      sheet.getRange(3,col,lastRow-2).setFormula(formula);
+    };
+  };    
+  setFormula(onshelfInvQty.col,onshelfInvQtyFormula);
+  setFormula(onshelfInv.col,onshelfInvFormula);
+  setFormula(inOnshelf.col,inOnshelfFormula);
+  setFormula(numNeeded.col,numNeededFormula);
+  setFormula(goodStock.col,goodStockFormula);    
+  var t5 = Date.now();  
+  Logger.log("Elapsed time, T5: "+(t5-t0)/1000+"s");
+  for (a=0;a<headers[0].length;a++) {
+    if (headers[0][a] == "BOM Level") {
+      bomLevel.col = a + 1;
+      break;
+    };
+  };
+  var data = sheet.getRange(3,1,lastRow-2,30).getValues();
+  var assemblyRow = 0;
+  sheet.getRange(3,assyCheck.col,lastRow-2).clearContent();
+  for (t=1;t<data.length;t++) {
+    var log = 0;
+    if(data[t][inOnshelf.col-1] == false) {      
+      if (searchPOA(t)) {        
+       sheet.getRange(t+3,assyCheck.col).setValue("POA");        
+      } else if (searchAOP(t)) {          
+        sheet.getRange(t+3,assyCheck.col).setValue("AOP");          
+      }; 
+    };        
+  };      
+  var t6 = Date.now();  
+  Logger.log("Elapsed time, T6: "+(t6-t0)/1000+"s");
+  lastCol = sheet.getLastColumn();
+  sheet.clearConditionalFormatRules();  
+  var rules = sheet.getConditionalFormatRules();
+  var rule = "";  
+  var vehicleHighlightFormula = "";
+  var highlight = "";
+  for (a=0;a<vehicles.length;a++) {
+    vehicleHighlightFormula = "=$"+String.fromCharCode(a+65)+"3=false";
+    Logger.log(vehicleHighlightFormula);
+    rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied(vehicleHighlightFormula)
+        .setBackground(vehicleColors[a])
+        .setFontColor(color.white)
+        .setRanges([sheet.getRange(3,bomLine.col,lastRow-2,lastCol)])
+        .build();
+    rules.push(rule);
+    highlight = [];
+  };    
+  rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=AND($M3=FALSE,ISBLANK($N3))')
+        .setBackground("Cyan")
+        .setRanges([sheet.getRange(3,bomLine.col,lastRow-2,lastCol)])
+        .build();  
+  rules.push(rule);  
+  rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied('=$'+goodStock.colLet+'3="!!!ALERT!!!"')
+        .setBackground("Red")
+        .setFontColor("White")
+        .setRanges([sheet.getRange(3,bomLine.col,lastRow-2,lastCol)])
+        .build();
+  rules.push(rule);
+  sheet.setConditionalFormatRules(rules);
+  sheet.autoResizeColumns(1,sheet.getLastColumn());
+  sheet.getRange(1,1,2,sheet.getLastColumn()).setBorder(true,true,true,true,true,true,"black",SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(1,1,1,offset).merge();
+  expandToProcesses(sheet); 
+  
+
+  
+  function searchAOP(startRow){
+    var a = startRow;
+    var b = a + 1;
+    var count = 0;
+    var countT = 0;    
+    while (b < data.length && data[a][bomLevel.col-1] > 1 && data[b][bomLevel.col-1] > data[a][bomLevel.col-1]){
+      count++;
+      if (data[b][inOnshelf.col-1] == true) {
+        countT++;
+      } else {
+        if (searchAOP(b)) {
+          countT++;
+        } else {
+          if (searchPOA(b)) {countT++};
+        };
+      };
+      b++;
+    };
+    if (count == countT && count > 0) {return true;};
+  };    
+  function searchPOA(startRow){
+    var b = startRow;
+    while (b>0 && data[startRow][bomLevel.col-1] > 0 && data[b][bomLevel.col-1] >= data[startRow][bomLevel.col-1]) {b--;};
+    var assemblyRow = b;
+    if (data[assemblyRow][inOnshelf.col-1] == true) {return true;} else if (data[assemblyRow][bomLevel.col-1] > 0) {if(searchPOA(assemblyRow)){return true;};};
+    return false;
+  };  
+};
+
+function clearDepth(sheet) {  
+ var range = sheet.getDataRange();
+ range.shiftRowGroupDepth(-8);
+};
+
+function setDepth(sheetName) {
+ var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+ var lastRow = sheet.getLastRow();
+ var lastCol = sheet.getLastColumn(); 
+ var headers = sheet.getRange(2,1,1,lastCol).getValues(); 
+ var a = 0;
+  while (a < headers[0].length && headers[0][a] != " BOM Level") {a++;};
+ var dRow = a + 1;
+ var depthList = sheet.getRange(3,dRow,lastRow-2).getValues();
+ var startRow = 0;
+ var endRow = 0;
+ var depthRange = "";
+ var testRow = "";
+ var depthRangeArr = [];  
+ for (i=0;i<=8;i++) {
+     for (a=0;a<depthList.length;a++){
+     if (depthList[a][0] > i) {
+       startRow = a+3;
+       testRow = a;
+       while (depthList[testRow+1] > i) {
+         testRow++;
+       };
+       endRow = testRow + 3;
+       depthRangeArr.push("A"+startRow+":A"+endRow);
+       a = testRow;
+     };
+   };   
+   for (d=0;d<depthRangeArr.length;d++){
+     sheet.getRange(depthRangeArr[d]).shiftRowGroupDepth(1);
+   };
+   depthRangeArr = [];
+  };
+};
+
+function Column(title,col) {
+  this.title = title;
+  this.col = col;
+  if(col < 27) {this.colLet = String.fromCharCode(64 + col)} else if (col > 26) {this.colLet = "A"+ String.fromCharCode(64 - 26 + col)};
+};
+
+function concatString() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var range = sheet.getActiveRange();
+  var targetCol = range.getColumn() + range.getNumColumns();
+  var targetRow = range.getRow();
+  var targetRows = range.getNumRows();
+  var source = range.getValues();
+  var output = [];
+  var values = [];  
+  for (a=0;a<source.length;a++){
+    output[a] = [];
+    output[a][0] = '('+source[a][2]+') '+source[a][0]+' - '+source[a][1];
+  };  
+  sheet.getRange(targetRow,targetCol,targetRows).setValues(output);
+};
+
+function compare() {
+  var ss = SpreadsheetApp.getActive();
+  var sheet1 = ss.getSheetByName("5 & 7");
+  var sheet2 = ss.getSheetByName("4, 5, 7");
+  var data1 = sheet1.getRange(1,2,sheet1.getLastRow()).getValues();
+  var data2 = sheet2.getRange(1,3,sheet2.getLastRow()).getValues();  
+  for (a=0;a<data1.length;a++) {
+    if (data1[a][0] == true & data2[a][0] == false) {
+      sheet2.getRange(a+1,3).setValue(true);
+    };
+  };
+};
+
+function expandIncomplete() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var headers = getHeaders(sheet);
+  Logger.log(headers);
+  var ui = SpreadsheetApp.getUi();
+  var vehicle = 0;
+  var response = ui.prompt("Select Vehicle","Vehicle to show incomplete:",ui.ButtonSet.OK);
+  if (response.getSelectedButton() == ui.Button.OK) {
+    vehicle = response.getResponseText();
+    if (headers[0].indexOf(vehicle) != -1) {
+        ui.alert("You entered a vehicle number.");
+    } else {ui.alert("Please enter the vehicle number. \n You entered: "+typeof vehicle+"\n valid inputs are: "+typeof headers[0]);};
+  };
+  var lastRow = sheet.getLastRow();
+  var headers = getHeaders(sheet);
+  if (Number.isInteger(vehicle)) {
+    var vehicleColumn = headers.indexOf(vehicle) + 1;
+    sheet.getRange(3,vehicleColumn,lastRow - 2).getValues();
+  } else {SpreadsheetApp.getUi().alert("The selected cell is not an integer.  Please select the vehicle number you would like to display incomplete.")};
+};
+
+function expandToProcesses(sheet) {
+  sheet.collapseAllRowGroups();
+  sheet.expandRowGroupsUpToDepth(3);
+};
+
+function showProcesses() {
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getActiveSheet();
+  expandToProcesses(sheet);
+};
+
+function onEdit(e) {
+  var range = e.range;  
+  var row = range.getRow();
+  var sheet = e.source.getActiveSheet();
+  var ui = SpreadsheetApp.getUi();
+  var dv = checkCheckbox(range);
+  ui.alert(rangeArr);
+  if (dv.isCheckbox & dv.value == true) {
+    var offset = getOffset(sheet,row);
+    var info = installInfo(sheet,range,offset);
+    var targetSheet = e.source.getSheetByName('Installation Log');
+    targetSheet.appendRow(info);
+  } else if (dv.isCheckbox & dv.value == false) {
+    var offset = getOffset(sheet,row);
+    var info = installInfo(sheet,range,offset);
+    var targetSheet = e.source.getSheetByName('Removal Log');
+    targetSheet.appendRow(info);
+  };  
+};
+
+function getOffset(sheet,row) {
+  var data = sheet.getRange(row,1,1,sheet.getLastColumn()).getDataValidations();
+  var rowData = data[0];
+  var checkboxInfo = {column: 0};
+  var checkboxes = [];
+  for (i=0;i<rowData.length;i++) {
+    if (rowData[i] !== null) {
+      var criteriaType = rowData[i].getCriteriaType();
+      if (criteriaType == "CHECKBOX") { 
+        checkboxInfo.column = i + 1;
+        checkboxes.push(checkboxInfo)
+      };
+    };
+  };
+  return checkboxes[checkboxes.length-1].column;
+};
+
+function checkCheckbox(range) {
+  if (range.getDataValidation != null) {
+    var checkboxInfo = {isCheckbox: true, validation: range.getDataValidation().getCriteriaType(), value: range.getValue()}
+    return checkboxInfo;
+  } else {
+    var checkboxInfo = {isCheckbox: false, validation: range.getDataValidation().getCriteriaType(), value: range.getValue()}
+    return checkboxInfo;
+  };
+};
+
+function test() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName("4, 5, 7");
+  var range = sheet.getRange(5,2);
+  var row = range.getRow();
+  var offset = 3;
+  var info = installInfo(sheet,row,offset,range);
+};
+
+function installInfo(sheet,range,offset) {
+  var date = new Date(Date.now());
+  var row = range.getRow()-1;
+  var col = range.getColumn()-1;
+  var data = sheet.getDataRange().getValues();
+  var intallationInfo = {
+    date: date,
+    vehicle: data[1][col],
+    partNumber: data[row][offset+1],
+    partName: data[row][offset+2],
+    bomName: sheet.getSheetName(),
+    bomLine: row + 1
+  };
+  var output = [intallationInfo.date,intallationInfo.vehicle,intallationInfo.partNumber,intallationInfo.partName,'"'+intallationInfo.bomName+'"',intallationInfo.bomLine];  
+  return output;
+};
+
+function fixDates() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName('Installation Log');
+  var range = sheet.getRange('A385:A402');
+  var data = range.getValues();
+  Logger.log(new Date(Date.now())+" Data = "+new Date(Date.parse(data[0][0]))+" new = "+new Date( +Date.parse(data[0][0])+ +3600000*3));
+  var output = [];
+  for (a=0;a<data.length;a++) {
+    output[a] = [];
+    output[a][0] = new Date( +Date.parse(data[a][0])+ +3600000*3);
+  };
+  range.setValues(output);
+};
+
+function setMetrics(vehicles,bomLevel,sheet,startRow,startCol) {
+  var metricsSheet = SpreadsheetApp.getActive().getSheetByName('Metrics');
+  var name = buildName(vehicles);
+  var vehiclesLet = [];
+  for (a=0;a<vehicles.length;a++) {
+    vehiclesLet.push(String.fromCharCode(65 + a));
+  };
+  if (type == 1) {
+    var buildCells = ["BUILD CELL 1-BOND","BUILD CELL 2-CHASSIS","BUILD CELL 3-ELECTRICAL","BUILD CELL 4-INTERIOR/EXTERIOR"];
+  };
+  
+  var output = []
+  for (y=0;y<vehiclesLet.length;y++) {
+    output[y] = [];
+    for (x=0;x<buildCells.length;x++) {
+      output[y][x] = setMetricFormula(name,buildCell.colLet,buildCells[x],vehiclesLet[y]);
+    };
+  };
+  Logger.log("OUTPUT: "+output);
+}
+
+function setMetricFormula(sourceSheet,buildCellColLet,buildCells,vehiclesLet) {
+  var formula = "=countifs('"+sourceSheet+"'!$"+buildCellColLet+"$3:$"+buildCellColLet+',"='+buildCells+",'"+sourceSheet+"'!$"+vehiclesLet+"$3:$"+vehiclesLet+",true)/countif('"+sourceSheet+"'!$"+buildCellColLet+"$3:$"+buildCellColLet+',"='+buildCells+'")';
+  return formula;
+}
+
+function findCell(term,sheet) {
+  var location = {row: 0, col: 0,found: false};
+  var data = sheet.getDataRange().getValues();
+  Logger.log(data.length);
+  for (a=0;a<data.length;a++) {
+    location.col = data[a].indexOf(term);
+    location.row = a + 1;
+    if (location.col >= 0) {
+      location.found = true;
+      location.col++;
+      break;
+    };
+  };
+  return location;
+};
+
+const Color = {
+  black:"#000000",
+  dark_grey_4:"#434343",
+  dark_grey_3:"#666666",
+  dark_grey_2:"#999999",
+  dark_grey_1:"#b7b7b7",
+  grey:"#cccccc",
+  light_grey_1:"#d9d9d9",
+  light_grey_2:"#efefef",
+  light_grey_3:"#f3f3f3",
+  white:"#ffffff",
+  red_berry:"#980000",
+  red:"#ff0000",
+  orange:"#ff9900",
+  yellow:"#ffff00",
+  green:"#00ff00",
+  cyan:"#00ffff",
+  cornflower_blue:"#4a86e8",
+  blue:"#0000ff",
+  purple:"#9900ff",
+  magenta:"#ff00ff",
+  light_red_berry_3:"#e6b8af",
+  light_red_3:"#f4cccc",
+  light_orange_3:"#fce5cd",
+  light_yellow_3:"#fff2cc",
+  light_green_3:"#d9ead3",
+  light_cyan_3:"#d0e0e3",
+  light_cornflower_blue_3:"#c9daf8",
+  light_blue_3:"#cfe2f3",
+  light_purple_3:"#d9d2e9",
+  light_magenta_3:"#ead1dc",
+  light_red_berry_2:"#dd7e6b",
+  light_red_2:"#ea9999",
+  light_orange_2:"#f9cb9c",
+  light_yellow_2:"#ffe599",
+  light_green_2:"#b6d7a8",
+  light_cyan_2:"#a2c4c9",
+  light_cornflower_blue_2:"#a4c2f4",
+  light_blue_2:"#9fc5e8",
+  light_purple_2:"#b4a7d6",
+  light_magenta_2:"#d5a6bd",
+  light_red_berry_1:"#cc4125",
+  light_red_1:"#e06666",
+  light_orange_1:"#f6b26b",
+  light_yellow_1:"#ffd966",
+  light_green_1:"#93c47d",
+  light_cyan_1:"#76a5af",
+  light_cornflower_blue_1:"#6d9eeb",
+  light_blue_1:"#6fa8dc",
+  light_purple_1:"#8e7cc3",
+  light_magenta_1:"#c27ba0",
+  dark_red_berry_1:"#a61c00",
+  dark_red_1:"#cc0000",
+  dark_orange_1:"#e69138",
+  dark_yellow_1:"#f1c232",
+  dark_green_1:"#6aa84f",
+  dark_cyan_1:"#45818e",
+  dark_cornflower_blue_1:"#3c78d8",
+  dark_blue_1:"#3d85c6",
+  dark_purple_1:"#674ea7",
+  dark_magenta_1:"#a64d79",
+  dark_red_berry_2:"#85200c",
+  dark_red_2:"#990000",
+  dark_orange_2:"#b45f06",
+  dark_yellow_2:"#bf9000",
+  dark_green_2:"#38761d",
+  dark_cyan_2:"#134f5c",
+  dark_cornflower_blue_2:"#1155cc",
+  dark_blue_2:"#0b5394",
+  dark_purple_2:"#351c75",
+  dark_magenta_2:"#741b47",
+  dark_red_berry_3:"#5b0f00",
+  dark_red_3:"#660000",
+  dark_orange_3:"#783f04",
+  dark_yellow_3:"#7f6000",
+  dark_green_3:"#274e13",
+  dark_cyan_3:"#0c343d",
+  dark_cornflower_blue_3:"#1c4587",
+  dark_blue_3:"#073763",
+  dark_purple_3:"#20124d",
+  dark_magenta_3:"#4c1130"
+};  
+
+function setCheckBoxes(vehicles,headers,sheet,vehicleColors,lastRow) {
+  for (a=0;a<vehicles.length;a++) {
+    if (headers[0][a] != vehicles[a]) {
+      sheet.insertColumnBefore(a+1);
+      sheet.getRange(2,a+1).setValue(vehicles[a]);
+    };
+  };
+  sheet.getRange(3,1,lastRow-2,vehicles.length).insertCheckboxes();
+  for (a=0;a<vehicles.length;a++) {
+    sheet.getRange(2,a+1,lastRow).setBackground(vehicleColors[a]);
+  };
+};
+
+function setVehicleColumns() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  
+  var response = ui.prompt("Vehicles (#,#,#,...)",ui.ButtonSet.OK_CANCEL);
+  if (response.getSelectedButton() == ui.Button.OK) {
+    var vehicles = response.getResponseText().split(",");
+    ui.alert("Vehicles = "+vehicles[1]);
+  };
+}
+
+function setupVehicleBOM() {
+  const t0 = Date.now();
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const vehicle = ["4","8","5","7","9","10","11","12","14","15","16","17"];
+  const uninstallCol = [[0,5],[7,12],[14,19],[21,26],[28,33],[35,40],[42,47],[49,54],[56,61],[63,68],[70,75],[77,82]];
+  const vehicleStatus = [
+    [4,"4, 5, 7",0,4]
+    ,[8,"6 & 8",1,3]
+    ,[5,"4, 5, 7",1,4]
+    ,[7,"4, 5, 7",2,4]
+    ,[9,"9, 10, 11, 12, 14",0,6]
+    ,[10,"9, 10, 11, 12, 14",1,6]
+    ,[11,"9, 10, 11, 12, 14",2,6]
+    ,[12,"9, 10, 11, 12, 14",3,6]
+    ,[14,"9, 10, 11, 12, 14",4,6]
+    ,[15,"4, 5, 7",0,4]
+    ,[16,"4, 5, 7",0,4]
+    ,[17,"4, 5, 7",0,4]
+  ];
+  const uninstallSheet = ss.getSheetByName("Uninstalled Parts");
+  const uninstallData = uninstallSheet.getDataRange().getValues();  
+  var response = ui.prompt("Vehicle #:", ui.ButtonSet.OK_CANCEL);
+  if (response.getSelectedButton() == ui.Button.OK) {
+    var vehicleInstallCheck = vehicle.indexOf(response.getResponseText());    
+    response = ui.alert("Vehicle Check = "+vehicleInstallCheck+" \n Proceed?",ui.ButtonSet.YES_NO);
+    if (response == ui.Button.YES) {
+      const buySheet = ss.getSheetByName("FLAT PURCHASE BOM 8/25");
+      const buySheetData = buySheet.getDataRange().getValues();
+      const buySheetParts = getColumnValues(buySheetData,1,3);
+      const vehicleUninstalledParts = getColumnValues(uninstallData,uninstallCol[vehicleInstallCheck][0],2);
+      const vehicleUninstalledConsumable = getColumnValues(uninstallData,uninstallCol[vehicleInstallCheck][1],2);
+      const vehiclePartStatusData = ss.getSheetByName(vehicleStatus[vehicleInstallCheck][1]).getDataRange().getValues();
+      const statusData = getColumnValues(vehiclePartStatusData,vehicleStatus[vehicleInstallCheck][2],3);
+      const statusPartData = getColumnValues(vehiclePartStatusData,vehicleStatus[vehicleInstallCheck][3],3);
+      const invSheet = ss.getSheetByName("Onshelf");
+      const invData = invSheet.getDataRange().getValues();
+      const invPartList = getColumnValues(invData,6,3);
+      const dataRange = sheet.getDataRange();
+      const data = dataRange.getValues();
+      dataRange.clear();
+      var output = [];
+      var row = 1;
+      output[0] = [...data[0]];
+      output[0].unshift("Status");
+      output[0].unshift("IV");//Inventory Version Check
+      output[0].unshift("Inventory");//Inventory Check
+      output[0].unshift("BV");//Buy Version Check
+      output[0].unshift("Buy");//Buy Check
+      output[0].unshift("SV");//Previous Status Version Check
+      output[0].unshift("S");//Previous Status Check
+      for (a=1;a<data.length;a++) {
+        output[row]=[...data[a]];
+        var part = data[a][0].toString();
+        output[row].unshift("");
+        if (findPart(part,vehicleUninstalledParts.version,ui)) {
+          output[row][0] = "Inventory";
+        } else if (findPart(part,vehicleUninstalledConsumable.version,ui)) {
+          output[row][0] = "Inventory";
+        } else if (statusPartData.version.indexOf(part) == -1) {
+          if (findPart(part.slice(0,-2),statusPartData.id)) {
+            output[row][0] = "Version";
+          } else {
+            output[row][0] = "N.I.S.";
+          };
+        } else {
+          output[row][0] = "Installed";
+        };
+        if (findPart(part.slice(0,-2),invPartList.id)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        if (findPart(part,invPartList.version)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        if (findPart(part.slice(0,-2),buySheetParts.id,ui)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        if (findPart(part,buySheetParts.version,ui)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        if (findPart(part.slice(0,-2),statusPartData.id,ui)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        if (findPart(part,statusPartData.version,ui)) {
+          output[row].unshift(1);
+        } else {
+          output[row].unshift(0);
+        };
+        row++;
+      }; 
+      sheet.getRange(1,1,output.length,output[0].length).setValues(output);
+      const statusCol = 7;
+      const statusLet = String.fromCharCode(statusCol+64);
+      const statusPartsValues = ["Inventory","Installed","Subassembly","Cell 1","Cell 2","Cell 3","Cell 4","Set Status","N.I.S."];
+      const statusVehicleValues = ["Scheduled","Pre-Production","LSAM","Bonding","Chassis","Electrical","Exterior","Interior","Optics","Post-Production","Complete"];
+      const statusPartsRange = sheet.getRange(3,statusCol,sheet.getLastRow()-2);
+      const statusVehicleRange = sheet.getRange(2,statusCol);
+      setDataValidation(statusPartsValues,statusPartsRange);
+      setDataValidation(statusVehicleValues,statusVehicleRange);      
+      var bandings = sheet.getBandings();
+      for (let a = 0;a<bandings.length;a++) {bandings[a].remove()};
+      const newDataRange = sheet.getRange(1,statusCol+1,sheet.getLastRow(),sheet.getLastColumn()-statusCol);
+      var bold = SpreadsheetApp.newTextStyle().setBold(true).build();
+      newDataRange
+      .setBorder(true,true, true, true, true, true, "black", SpreadsheetApp.BorderStyle.SOLID)
+      .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+      sheet.getRange(1,1,1,sheet.getLastColumn())
+      .setBorder(true,true,true,true,true,true,"black",SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+      .setTextStyle(bold);
+      const highlightDataRange = sheet.getRange(3,statusCol+1,sheet.getLastRow()-2,sheet.getLastColumn()-statusCol);
+      sheet.clearConditionalFormatRules();
+      var rules = sheet.getConditionalFormatRules();
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Inventory"',Color.red,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Subassembly"',Color.light_green_1,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 1"',Color.light_purple_1,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 2"',Color.light_blue_1,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 3"',Color.light_orange_1,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 4"',Color.light_yellow_1,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Set Status"',Color.cyan,null);
+      rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="N.I.S."',Color.yellow,null);
+      const conditionValues = ["Inventory","Subassembly","Cell 1","Cell 2","Cell 3","Cell 4","Set Status","N.I.S.","Installed"];
+      const conditionValueColors = [Color.light_red_1,Color.light_green_2,Color.light_purple_2,Color.light_blue_2,Color.light_orange_2,Color.light_yellow_2,Color.light_cyan_2,Color.yellow];
+      const statusColRange = sheet.getRange(3,statusCol,sheet.getLastRow());
+      for (let a = 0;a<conditionValues.length-1;a++) {
+        rowHighlightRule(rules,statusColRange,'=$'+statusLet+'3="'+conditionValues[a]+'"',conditionValueColors[a],null);
+      };
+      rowHighlightRule(rules,sheet.getRange(2,1,sheet.getLastRow()-1),'=if(and($A2=0,$C2=1),true)',Color.yellow,Color.yellow);
+      rowHighlightRule(rules,sheet.getRange(2,2,sheet.getLastRow()-1),'=if(and($B2=1,$A2=0),true)',Color.yellow,Color.yellow);
+      rowHighlightRule(rules,sheet.getRange(2,4,sheet.getLastRow()-1),'=if(and($D2=1,$C2=0),true)',Color.yellow,Color.yellow);
+      rowHighlightRule(rules,sheet.getRange(2,6,sheet.getLastRow()-1),'=if(and($E2=0,$F2=1),true)',Color.yellow,Color.yellow);
+      rowHighlightRule(rules,sheet.getRange(2,5,sheet.getLastRow()-1),'=if(and($E2=0,$C2=1),true)',Color.yellow,Color.yellow);
+      rowHighlightRule(rules,sheet.getRange(2,1,sheet.getLastRow()-1,statusCol-1),'=A2=1',"#309c00","#309c00");
+      rowHighlightRule(rules,sheet.getRange(2,1,sheet.getLastRow(),statusCol-1),'=A2=0',Color.dark_red_berry_2,Color.dark_red_berry_2);
+      sheet.setConditionalFormatRules(rules);
+      sheet.getRange(1,1,sheet.getLastRow(),statusCol)
+      .setBorder(true,true,true,true,true,true,"black",SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+      .setBackground(Color.light_gray_1)
+      .setTextStyle(bold);
+      sheet.autoResizeColumns(1, sheet.getLastColumn());
+      sheet.setColumnWidths(1, statusCol-1, 25);
+      sheet.setFrozenColumns(statusCol);
+      sheet.setFrozenRows(1);
+    };
+  };
+  const t10 = Date.now();
+  const elapse = (t10-t0)/1000;
+  ui.alert("Elapsed time = "+elapse);
+}
+
+function rowHighlightRule(rules,range,formula,color,text) {
+  var rule = SpreadsheetApp.newConditionalFormatRule()
+  .whenFormulaSatisfied(formula)
+  .setRanges([range])
+  .setBackground(color)
+  .setFontColor(text)
+  .build();
+  rules.push(rule);
+}
+
+function findPart(partNo,dataSet,ui) {
+  if (dataSet.indexOf(partNo) !== -1) {
+    return true;
+  };
+};
+
+function setDataValidation(values,range) {
+  var rule = SpreadsheetApp.newDataValidation().requireValueInList(values).build();
+  range.setDataValidation(rule);
+}
+
+function fixRowGroups(sheet,depthList,rowOffset) {
+  var sRow = 0;
+  var eRow = 0;
+  var tRow = 0;
+  var dRangeArr = [];
+  
+  for (let a = 0;a<=8;a++) {
+    for (let b = 0;b<depthList.length;b++) {
+      if (depthList[b] > a) {
+        sRow = b+rowOffset;
+        tRow = b;
+        while (depthList[tRow+1] > a) {
+          tRow++;
+        };
+        eRow = tRow + rowOffset;
+        dRangeArr.push("A"+sRow+":A"+eRow);
+        b = tRow;
+      };
+    };
+    for (let c = 0;c<dRangeArr.length;c++) {
+      sheet.getRange(dRangeArr[c]).shiftRowGroupDepth(1);
+    };
+    dRangeArr = [];
+  };
+}
+
+function getColumnValues (data,column,startRow) {
+  var output = {
+    id: [],
+    version: []
+  };
+  for (let a = startRow; a<data.length; a++) {
+    var element = data[a][column];
+    output.version.push(element);
+    output.id.push(element.toString().slice(0,-2));
+  };
+  return output;
+};
+
+function compareBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(2,8,sheet1.getLastRow()-1,2).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,8,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function compareBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(2,8,sheet1.getLastRow()-1,2).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,8,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function compareBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(2,8,sheet1.getLastRow()-1,2).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,8,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function comparePBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(2,8,sheet1.getLastRow()-1,3).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,2,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (data1[b][2] < 2 && list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function comparePreviousBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(3,4,sheet1.getLastRow()-2,2).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,8,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function comparePreviousBOMPBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  const cell = ss.getActiveCell();
+  const row = cell.getRow();
+  const col = cell.getColumn();
+  const s1 = sheet.getRange(row-1,col+1).getValue();
+  const s2 = sheet.getRange(row-1,col+3).getValue();
+  const sheet1 = ss.getSheetByName(s1);
+  const sheet2 = ss.getSheetByName(s2);
+  const data1 = sheet1.getRange(2,2,sheet1.getLastRow()-2,2).getValues();
+  const list1 = [];
+  for (let a=0;a<data1.length;a++) {
+    list1.push(data1[a][0]);
+  };
+  const data2 = sheet2.getRange(2,1,sheet2.getLastRow()-1,2).getValues();
+  const list2 = [];
+  for (a=0;a<data2.length;a++) {
+    list2.push(data2[a][0]);
+  };
+  var output = [];
+  if (list2.length > list1.length) {
+    for (a=0;a<list2.length;a++) {
+      output[a] = ["","","",""];
+    };
+  } else {
+    for (a=0;a<list1.length;a++) {
+      output[a] = ["","","",""];
+    };
+  };
+  var r = 0;
+  for (let b = 0;b<list1.length;b++) {
+    if (list2.indexOf(list1[b]) == -1) {
+      output[r][0]=data1[b][0];
+      output[r][1]=data1[b][1];
+      r++;
+    };
+  };
+  r = 0;
+  for (let c = 0;c<list2.length;c++) {
+    if (list1.indexOf(list2[c]) == -1) {
+      output[r][2] = data2[c][0];
+      output[r][3] = data2[c][1];
+      r++;
+    };
+  };
+  sheet.getRange(row,col,output.length,output[0].length).setValues(output);
+};
+
+function insertCategoriesPBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const refSheet = ss.getSheetByName("FULL LIST");
+  const data = sheet.getRange(2,1,sheet.getLastRow()-1).getValues();
+  const ref = refSheet.getRange(2,1,refSheet.getLastRow()-1,7).getValues();
+  
+  function genList(listData,col,list) {
+    for (a=0;a<listData.length;a++) {
+      list.push(listData[a][col]);
+    };
+  };
+  
+  var dataList = [];
+  var refList = [];
+  
+  genList(data,0,dataList);
+  Logger.log(dataList);
+  genList(ref,0,refList);
+  Logger.log(refList);
+  var output = [];
+  var row = -1;
+  
+  for (a=0;a<dataList.length;a++) {
+    output[a]=[];
+    if (refList.indexOf(dataList[a]) != -1) {
+      row = refList.indexOf(dataList[a]);
+      output[a][0] = ref[row][6];
+    };
+  };
+  Logger.log(output);
+  sheet.getRange(2,3,sheet.getLastRow()-1).setValues(output);
+}
+
+function insertCategoriesVBOM() {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getActiveSheet();
+  const refSheet = ss.getSheetByName("FULL LIST");
+  const data = sheet.getRange(2,8,sheet.getLastRow()-1).getValues();
+  const ref = refSheet.getRange(1,1,refSheet.getLastRow(),7).getValues();
+  
+  function genList(listData,col,list) {
+    for (a=0;a<listData.length;a++) {
+      list.push(listData[a][col]);
+    };
+  };
+  
+  var dataList = [];
+  var refList = [];
+  
+  genList(data,0,dataList);
+  Logger.log(dataList);
+  genList(ref,0,refList);
+  Logger.log(refList);
+  var output = [];
+  var row = -1;
+  
+  for (a=0;a<dataList.length;a++) {
+    output[a]=[];
+    output[a][0] = "";
+    if (refList.indexOf(dataList[a]) != -1) {
+      output[a][0] = ref[refList.indexOf(dataList[a])][6];
+    };
+  };
+  Logger.log(output);
+  sheet.getRange(2,10,sheet.getLastRow()-1).setValues(output);
+}
+
+function vBOMDataValidations(name) {
+  const ss = SpreadsheetApp.getActive();
+  const sheet = ss.getSheetByName(name);
+  const validationRange = sheet.getRange(3,1,sheet.getLastRow()-2);
+  
+  const statusCol = 1;
+  const statusLet = String.fromCharCode(statusCol+64);
+  const statusPartsValues = ["Inventory","Installed","Subassembly","Cell 1","Cell 2","Cell 3","Cell 4","Set Status","N.I.S."];
+  const statusVehicleValues = ["Scheduled","Pre-Production","LSAM","Bonding","Chassis","Electrical","Exterior","Interior","Optics","Post-Production","Complete"];
+  const statusPartsRange = sheet.getRange(3,statusCol,sheet.getLastRow()-2);
+  const statusVehicleRange = sheet.getRange(2,statusCol);
+  setDataValidation(statusPartsValues,statusPartsRange);
+  setDataValidation(statusVehicleValues,statusVehicleRange);      
+  var bandings = sheet.getBandings();
+  for (let a = 0;a<bandings.length;a++) {bandings[a].remove()};
+  const newDataRange = sheet.getRange(1,statusCol+1,sheet.getLastRow(),sheet.getLastColumn()-statusCol);
+  var bold = SpreadsheetApp.newTextStyle().setBold(true).build();
+  newDataRange
+  .setBorder(true,true, true, true, true, true, "black", SpreadsheetApp.BorderStyle.SOLID)
+  .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+  sheet.getRange(1,1,1,sheet.getLastColumn())
+  .setBorder(true,true,true,true,true,true,"black",SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+  .setTextStyle(bold);
+  const highlightDataRange = sheet.getRange(3,statusCol+1,sheet.getLastRow()-2,sheet.getLastColumn()-statusCol);
+  sheet.clearConditionalFormatRules();
+  var rules = sheet.getConditionalFormatRules();
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Inventory"',Color.red,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Subassembly"',Color.light_green_1,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 1"',Color.light_purple_1,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 2"',Color.light_blue_1,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 3"',Color.light_orange_1,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Cell 4"',Color.light_yellow_1,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="Set Status"',Color.cyan,null);
+  rowHighlightRule(rules,highlightDataRange,'=$'+statusLet+'3="N.I.S."',Color.yellow,null);
+  const conditionValues = ["Inventory","Subassembly","Cell 1","Cell 2","Cell 3","Cell 4","Set Status","N.I.S.","Installed"];
+  const conditionValueColors = [Color.light_red_1,Color.light_green_2,Color.light_purple_2,Color.light_blue_2,Color.light_orange_2,Color.light_yellow_2,Color.light_cyan_2,Color.yellow];
+  const statusColRange = sheet.getRange(3,statusCol,sheet.getLastRow());
+  for (let a = 0;a<conditionValues.length-1;a++) {
+    rowHighlightRule(rules,statusColRange,'=$'+statusLet+'3="'+conditionValues[a]+'"',conditionValueColors[a],null);
+  };
+
+  sheet.setConditionalFormatRules(rules);
+  sheet.getRange(1,1,sheet.getLastRow(),statusCol)
+  .setBorder(true,true,true,true,true,true,"black",SpreadsheetApp.BorderStyle.SOLID_MEDIUM)
+  .setBackground(Color.light_gray_1)
+  .setTextStyle(bold);
+  
+  setDataValidation(statusPartsValues,validationRange);
+}
+
+function fixFormat() {
+  const sheets = [8,9,10,11,12,14];
+  for (a=0;a<sheets.length;a++) {
+    vBOMDataValidations(sheets[a]);
+  };
+}
